@@ -1,0 +1,22 @@
+{
+  "name": "SensorLoggerM",
+  "version": "1.0.0",
+  "description": "A thread-safe Arduino library for efficient sensor logging over HTTP",
+  "keywords": "arduino, sensor, logging, http, threadsafe, platformio",
+  "authors": [
+    {
+      "name": "Mustafa Hekmat",
+      "email": "cvd306@alumni.ku.dk"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mullestafa/SensorLoggerM.git"
+  },
+  "frameworks": "arduino",
+  "platforms": "*",
+  "dependencies": [
+    "bblanchon/ArduinoJson"
+  ]
+}
+
