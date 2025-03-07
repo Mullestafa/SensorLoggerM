@@ -10,11 +10,11 @@
 
 // Structure to hold a sensor log entry.
 struct SensorLog {
+  String timestamp;
   String experimentId;
   String deviceName;
   String sensorName;
   float value;
-  unsigned long timestamp;
 };
 
 class SensorLoggerM {
@@ -29,7 +29,7 @@ public:
   bool begin(const char* ssid, const char* password, unsigned long timeout = 10000);
   
   // Log a sensor reading (thread‑safely adds an entry to the internal buffer).
-  void log(const String &experimentId, const String &deviceName, const String &sensorName, float value);
+  void log(const tm time,const String &experimentId, const String &deviceName, const String &sensorName, float value);
   
   // Send the buffered logs to the server as a JSON array.
   // If successful, clears the buffer and returns true.

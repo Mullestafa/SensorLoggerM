@@ -22,13 +22,17 @@ bool SensorLoggerM::begin(const char* ssid, const char* password, unsigned long 
   return (WiFi.status() == WL_CONNECTED);
 }
 
-void SensorLoggerM::log(const String &experimentId, const String &deviceName, const String &sensorName, float value) {
+void SensorLoggerM::log(const tm timeinfo, const String &experimentId, const String &deviceName, const String &sensorName, float value) {
   SensorLog entry;
   entry.experimentId = experimentId;
   entry.deviceName = deviceName;
   entry.sensorName = sensorName;
   entry.value = value;
-  entry.timestamp = millis(); // You could also use an RTC or NTP for a real timestamp.
+  entry.timestamp = ([](const struct tm *t) -> String {
+    char buf[64];
+    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
+    return String(buf);
+  })(&timeinfo);
 
   // Take the mutex before modifying the buffer.
   if(xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE) {
@@ -53,19 +57,23 @@ bool SensorLoggerM::flush() {
   xSemaphoreGive(_mutex);
 
   // Build the JSON payload from the copied logs.
-  DynamicJsonDocument doc(1024);
+  JsonDocument doc;
   JsonArray array = doc.to<JsonArray>();
   for (auto &entry : logsToSend) {
-    JsonObject obj = array.createNestedObject();
+    JsonObject obj = array.add<JsonObject>();
     obj["experiment_id"] = entry.experimentId;
-    obj["device_name"] = entry.deviceName;
-    obj["sensor_name"] = entry.sensorName;
-    obj["value"] = entry.value;
-    obj["timestamp"] = entry.timestamp;
+    obj["device_name"]   = entry.deviceName;
+    obj["sensor_name"]   = entry.sensorName;
+    obj["value"]         = entry.value;
+    obj["recorded_at"]     = entry.timestamp;
   }
+
+  
   String payload;
   serializeJson(doc, payload);
-
+  
+  log_i("log serialized: %s", payload.c_str());
+  
   // Send the JSON payload using HTTP.
   HTTPClient http;
   http.begin(_serverUrl);
