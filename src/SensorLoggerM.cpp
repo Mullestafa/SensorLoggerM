@@ -22,17 +22,24 @@ bool SensorLoggerM::begin(const char* ssid, const char* password, unsigned long 
   return (WiFi.status() == WL_CONNECTED);
 }
 
-void SensorLoggerM::log(const tm timeinfo, const String &experimentId, const String &deviceName, const String &sensorName, float value) {
+void SensorLoggerM::log(struct tm timeinfo, unsigned int millisec,
+  const String &experimentId, const String &deviceName,
+  const String &sensorName, float value) {
   SensorLog entry;
   entry.experimentId = experimentId;
   entry.deviceName = deviceName;
   entry.sensorName = sensorName;
   entry.value = value;
-  entry.timestamp = ([](const struct tm *t) -> String {
-    char buf[64];
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
-    return String(buf);
-  })(&timeinfo);
+
+  // Format the date and time (year, month, day, etc.) from the timeinfo structure.
+  char timeBuffer[64];
+  strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
+
+  // Append milliseconds formatted to three digits.
+  char formattedTimestamp[80];
+  sprintf(formattedTimestamp, "%s.%03u", timeBuffer, millisec);
+
+  entry.timestamp = String(formattedTimestamp);
 
   // Take the mutex before modifying the buffer.
   if(xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE) {
